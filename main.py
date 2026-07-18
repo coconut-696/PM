@@ -1,11 +1,6 @@
 import json
 
-from telegram import (
-    Update,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup
-)
-
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -24,27 +19,27 @@ users = {}
 reply_targets = {}
 
 
-def load_db():
+def load_users():
     try:
-        with open(DB_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+        with open(DB_FILE, "r", encoding="utf-8") as file:
+            return json.load(file)
     except:
         return {}
 
 
-def save_db():
-    with open(DB_FILE, "w", encoding="utf-8") as f:
-        json.dump(users, f, ensure_ascii=False, indent=4)
+def save_users():
+    with open(DB_FILE, "w", encoding="utf-8") as file:
+        json.dump(users, file, ensure_ascii=False, indent=4)
 
 
-users = load_db()
+users = load_users()
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "سلام 👋\n"
         "پیامت را بفرست.\n"
-        "پیام تو ناشناس ارسال می‌شود."
+        "پیام تو کاملاً ناشناس ارسال می‌شود."
     )
 
 
@@ -53,14 +48,14 @@ async def user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
 
     users[user_id] = True
-    save_db()
+    save_users()
 
-    button = InlineKeyboardMarkup(
+    keyboard = InlineKeyboardMarkup(
         [
             [
                 InlineKeyboardButton(
                     "💬 پاسخ به کاربر",
-                    callback_data=f"reply_{user_id}"
+                    callback_data=f"reply:{user_id}"
                 )
             ]
         ]
@@ -69,7 +64,7 @@ async def user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(
         chat_id=ADMIN_ID,
         text=f"📩 پیام جدید:\n\n{text}",
-        reply_markup=button
+        reply_markup=keyboard
     )
 
     await update.message.reply_text(
@@ -77,23 +72,23 @@ async def user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
     if query.from_user.id != ADMIN_ID:
         return
 
-    user_id = query.data.split("_")[1]
+    user_id = query.data.split(":")[1]
 
     reply_targets[ADMIN_ID] = user_id
 
     await query.message.reply_text(
-        "✍️ پاسخ خود را بنویس:"
+        "✍️ جواب خودت را بنویس:"
     )
 
 
-async def admin_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def admin_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_ID:
         return
 
@@ -110,27 +105,26 @@ async def admin_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     del reply_targets[ADMIN_ID]
 
     await update.message.reply_text(
-        "پاسخ ارسال شد ✅"
+        "ارسال شد ✅"
     )
 
 
 def main():
     app = Application.builder().token(TOKEN).build()
 
-    app.add_handler(
-        CommandHandler("start", start)
-    )
+    app.add_handler(CommandHandler("start", start))
 
     app.add_handler(
-        CallbackQueryHandler(reply_button)
+        CallbackQueryHandler(button_click)
     )
 
-    # اول پیام‌های ادمین بررسی شود
+    # اول پاسخ ادمین
     app.add_handler(
         MessageHandler(
             filters.User(ADMIN_ID) & filters.TEXT,
-            admin_message
-        )
+            admin_reply
+        ),
+        group=0
     )
 
     # بعد پیام کاربران
@@ -138,7 +132,8 @@ def main():
         MessageHandler(
             filters.TEXT & ~filters.COMMAND,
             user_message
-        )
+        ),
+        group=1
     )
 
     app.run_polling()
