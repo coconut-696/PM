@@ -12,7 +12,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "سلام 👋\nبه ربات پیام ناشناس خوش آمدی.\nپیامت را بفرست."
     )
-  async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "پیامت دریافت شد ✅\nبه‌زودی ارسال می‌شود."
     )
