@@ -7,17 +7,18 @@ from telegram.ext import (
     filters,
 )
 TOKEN = "8726662807:AAElPtZ8HpqK7uMm0P8TKY-BZ0O1OzObAaM"
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "سلام 👋\nبه ربات پیام ناشناس خوش آمدی.\nپیامت را بفرست."
-    )
+ADMIN_ID = 7421114211
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_message = update.message.text
+    await context.bot.send_message(
+        chat_id=ADMIN_ID,
+        text=f"📩 پیام جدید:\n\n{user_message}"
+    )
     await update.message.reply_text(
-        "پیامت دریافت شد ✅\nبه‌زودی ارسال می‌شود."
+        "پیامت ارسال شد ✅"
     )
 def main():
     app = Application.builder().token(TOKEN).build()
-
     app.add_handler(CommandHandler("start", start))
     app.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
