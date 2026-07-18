@@ -1,5 +1,11 @@
 import json
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup
+)
+
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -14,6 +20,9 @@ ADMIN_ID = 7421114211
 
 DB_FILE = "database.json"
 
+users = {}
+reply_targets = {}
+
 
 def load_db():
     try:
@@ -23,36 +32,38 @@ def load_db():
         return {}
 
 
-def save_db(data):
+def save_db():
     with open(DB_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
+        json.dump(users, f, ensure_ascii=False, indent=4)
 
 
 users = load_db()
-reply_targets = {}
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "سلام 👋\n"
-        "پیامت را بفرست. پیام تو ناشناس ارسال می‌شود."
+        "پیامت را بفرست.\n"
+        "پیام تو ناشناس ارسال می‌شود."
     )
 
 
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     text = update.message.text
 
     users[user_id] = True
-    save_db(users)
+    save_db()
 
     button = InlineKeyboardMarkup(
-        [[
-            InlineKeyboardButton(
-                "💬 پاسخ به کاربر",
-                callback_data=f"reply_{user_id}"
-            )
-        ]]
+        [
+            [
+                InlineKeyboardButton(
+                    "💬 پاسخ به کاربر",
+                    callback_data=f"reply_{user_id}"
+                )
+            ]
+        ]
     )
 
     await context.bot.send_message(
@@ -73,7 +84,7 @@ async def reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if query.from_user.id != ADMIN_ID:
         return
 
-    user_id = query.data.replace("reply_", "")
+    user_id = query.data.split("_")[1]
 
     reply_targets[ADMIN_ID] = user_id
 
@@ -82,7 +93,7 @@ async def reply_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 
-async def admin_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def admin_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_ID:
         return
 
@@ -106,23 +117,27 @@ async def admin_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     app = Application.builder().token(TOKEN).build()
 
-    app.add_handler(CommandHandler("start", start))
+    app.add_handler(
+        CommandHandler("start", start)
+    )
 
     app.add_handler(
         CallbackQueryHandler(reply_button)
     )
 
+    # اول پیام‌های ادمین بررسی شود
     app.add_handler(
         MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
-            handle_message
+            filters.User(ADMIN_ID) & filters.TEXT,
+            admin_message
         )
     )
 
+    # بعد پیام کاربران
     app.add_handler(
         MessageHandler(
-            filters.TEXT & filters.User(ADMIN_ID),
-            admin_reply
+            filters.TEXT & ~filters.COMMAND,
+            user_message
         )
     )
 
