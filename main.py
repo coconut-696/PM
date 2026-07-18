@@ -7,38 +7,54 @@ from telegram.ext import (
     filters,
 )
 
-TOKEN = "8726662807:AAElPtZ8HpqK7uMm0P8TKY-BZ0O1OzObAaM"
-
-
+TOKEN = "8726662807:AAEhyxd8epMeVuI82xT1_bCRCXXHUWChkCE"
 ADMIN_ID = 7421114211
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "سلام 👋\nپیامت را بفرست."
+        "سلام 👋\n"
+        "به ربات پیام ناشناس خوش آمدی.\n"
+        "پیامت را بفرست."
     )
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
 
-    await context.bot.send_message(
-        chat_id=ADMIN_ID,
-        text=f"📩 پیام جدید:\n\n{user_message}"
-    )
+    try:
+        await context.bot.send_message(
+            chat_id=ADMIN_ID,
+            text=(
+                "📩 پیام جدید دریافت شد:\n\n"
+                f"{user_message}"
+            )
+        )
 
-    await update.message.reply_text(
-        "پیامت ارسال شد ✅"
-    )
+        await update.message.reply_text(
+            "پیامت ارسال شد ✅"
+        )
+
+    except Exception as e:
+        print("ERROR:", e)
+
+        await update.message.reply_text(
+            "خطا در ارسال پیام ❌"
+        )
 
 
 def main():
     app = Application.builder().token(TOKEN).build()
 
-    app.add_handler(CommandHandler("start", start))
+    app.add_handler(
+        CommandHandler("start", start)
+    )
 
     app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND,
+            handle_message
+        )
     )
 
     app.run_polling()
