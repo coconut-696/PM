@@ -21,15 +21,15 @@ reply_targets = {}
 
 def load_users():
     try:
-        with open(DB_FILE, "r", encoding="utf-8") as file:
-            return json.load(file)
+        with open(DB_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
     except:
         return {}
 
 
 def save_users():
-    with open(DB_FILE, "w", encoding="utf-8") as file:
-        json.dump(users, file, ensure_ascii=False, indent=4)
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(users, f, ensure_ascii=False, indent=4)
 
 
 users = load_users()
@@ -37,34 +37,34 @@ users = load_users()
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "سلام 👋\n"
-        "پیامت را بفرست.\n"
-        "پیام تو کاملاً ناشناس ارسال می‌شود."
+        "سلام 👋\nپیامت را بفرست."
     )
 
 
 async def user_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # اگر خود ادمین است، رد شو
+    if update.effective_user.id == ADMIN_ID:
+        return
+
     user_id = str(update.effective_user.id)
     text = update.message.text
 
     users[user_id] = True
     save_users()
 
-    keyboard = InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton(
-                    "💬 پاسخ به کاربر",
-                    callback_data=f"reply:{user_id}"
-                )
-            ]
-        ]
+    button = InlineKeyboardMarkup(
+        [[
+            InlineKeyboardButton(
+                "💬 پاسخ به کاربر",
+                callback_data=f"reply:{user_id}"
+            )
+        ]]
     )
 
     await context.bot.send_message(
         chat_id=ADMIN_ID,
         text=f"📩 پیام جدید:\n\n{text}",
-        reply_markup=keyboard
+        reply_markup=button
     )
 
     await update.message.reply_text(
@@ -84,7 +84,7 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_targets[ADMIN_ID] = user_id
 
     await query.message.reply_text(
-        "✍️ جواب خودت را بنویس:"
+        "✍️ پاسخ را بنویس:"
     )
 
 
@@ -105,7 +105,7 @@ async def admin_reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     del reply_targets[ADMIN_ID]
 
     await update.message.reply_text(
-        "ارسال شد ✅"
+        "پاسخ ارسال شد ✅"
     )
 
 
@@ -118,22 +118,20 @@ def main():
         CallbackQueryHandler(button_click)
     )
 
-    # اول پاسخ ادمین
+    # پیام‌های ادمین اول
     app.add_handler(
         MessageHandler(
             filters.User(ADMIN_ID) & filters.TEXT,
             admin_reply
-        ),
-        group=0
+        )
     )
 
-    # بعد پیام کاربران
+    # پیام کاربران بعد
     app.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND,
             user_message
-        ),
-        group=1
+        )
     )
 
     app.run_polling()
