@@ -6,7 +6,7 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
-TOKEN = "توکن_جدید_خودت"
+TOKEN = "8726662807:AAElPtZ8HpqK7uMm0P8TKY-BZ0O1OzObAaM"
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "سلام 👋\nبه ربات پیام ناشناس خوش آمدی.\nپیامت را بفرست."
