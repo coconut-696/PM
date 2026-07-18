@@ -7,16 +7,22 @@ from telegram.ext import (
     filters,
 )
 
-TOKEN = "8726662807:AAHua1G32iWYbcFzC_CfvUU49P3B971n1GY"
+TOKEN = "توکن_جدید_خودت"
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "سلام 👋\nبه ربات پیام ناشناس خوش آمدی.\nپیامت را بفرست."
     )
+
+
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "پیامت دریافت شد ✅\nبه‌زودی ارسال می‌شود."
     )
-    def main():
+
+
+def main():
     app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
