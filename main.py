@@ -8,6 +8,8 @@ from telegram.ext import (
 )
 
 TOKEN = "8726662807:AAElPtZ8HpqK7uMm0P8TKY-BZ0O1OzObAaM"
+
+
 ADMIN_ID = 7421114211
 
 
@@ -19,7 +21,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
-    print("پیام دریافت شد:", user_message)
 
     await context.bot.send_message(
         chat_id=ADMIN_ID,
